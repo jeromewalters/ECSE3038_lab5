@@ -11,6 +11,16 @@ const int ledPinNum2 = 14;
 const int ledPinNum3 = 27;
 
 
+bool led_sequence [8][3]= { {false, false, false},        
+                            {false, false, true},
+                            {false, true,  false},
+                            {false, true,  true},
+                            {true,  false, false},
+                            {true,  false, true},
+                            {true,  true,  false},
+                            {true,  true,  true},
+                           };
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -38,13 +48,27 @@ void loop() {
     HTTPClient http;
 
     String http_response;
-    http.begin(endpoint);   //starts the connection to the server
-    StaticJsonDocument<1024> doc; //create so we can put thing in this
-
-
-    int httpResponseCode = http.GET(); //This is to do a get request
-                                      //this code return an integer (status code)
+    http.begin(endpoint);                               //starts the connection to the server
     
+    for (int i = 0; i < 8; i++)
+    {
+
+    http.addHeader("X-API-Key", API_KEY);  
+    StaticJsonDocument<1024> doc;                      //create so we can put thing in this
+    doc["light_switch_1"] = led_sequence[i][0];
+    doc["light_switch_2"] = led_sequence[i][1];
+    doc["light_switch_3"] = led_sequence[i][2];
+
+    digitalWrite(ledPinNum1, led_sequence[i][0]);
+    digitalWrite(ledPinNum2, led_sequence[i][1]);
+    digitalWrite(ledPinNum3, led_sequence[i][2]);
+
+
+    String httpRequest; 
+    serializeJson(doc,httpRequest);
+    int httpResponseCode = http.PUT(httpRequest);     //This is to do a get request
+                                                      //this code return an integer (status code)
+                                      
     if (httpResponseCode > 0){
       Serial.print("HTTP Response Code:  ");
       Serial.println(httpResponseCode);
@@ -57,6 +81,10 @@ void loop() {
       Serial.print("Error code:  ");
       Serial.print(httpResponseCode);
     }
+    delay(2000);
+    }
+    
+    
     //free resourses
     http.end();
   }
